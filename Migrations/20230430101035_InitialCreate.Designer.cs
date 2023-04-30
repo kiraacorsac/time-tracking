@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace time_tracking.Migrations
 {
     [DbContext(typeof(CorsacTimeTrackerContext))]
-    [Migration("20230423232904_InitialCreate")]
+    [Migration("20230430101035_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -19,7 +19,7 @@ namespace time_tracking.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.5");
 
-            modelBuilder.Entity("ProcessSessionModel", b =>
+            modelBuilder.Entity("SessionModel", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -40,10 +40,10 @@ namespace time_tracking.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ProcessSessions");
+                    b.ToTable("Sessions");
                 });
 
-            modelBuilder.Entity("TitleSessionModel", b =>
+            modelBuilder.Entity("TitleModel", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -52,7 +52,7 @@ namespace time_tracking.Migrations
                     b.Property<DateTime>("End")
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("ProcessSessionModelId")
+                    b.Property<int>("SessionId")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("Start")
@@ -64,21 +64,25 @@ namespace time_tracking.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProcessSessionModelId");
+                    b.HasIndex("SessionId");
 
-                    b.ToTable("TitleSessions");
+                    b.ToTable("Titles");
                 });
 
-            modelBuilder.Entity("TitleSessionModel", b =>
+            modelBuilder.Entity("TitleModel", b =>
                 {
-                    b.HasOne("ProcessSessionModel", null)
-                        .WithMany("Subsessions")
-                        .HasForeignKey("ProcessSessionModelId");
+                    b.HasOne("SessionModel", "Session")
+                        .WithMany("Titles")
+                        .HasForeignKey("SessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Session");
                 });
 
-            modelBuilder.Entity("ProcessSessionModel", b =>
+            modelBuilder.Entity("SessionModel", b =>
                 {
-                    b.Navigation("Subsessions");
+                    b.Navigation("Titles");
                 });
 #pragma warning restore 612, 618
         }

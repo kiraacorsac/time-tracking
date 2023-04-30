@@ -7,7 +7,7 @@ public class CorsacTimeTracker
 
     private ActiveWindowService ActiveWindowService { get; set; }
     private IdleTimeService IdleTimeService { get; set; }
-    private IDictionary<ProcessId, ProcessSession> ActiveSessions { get; set; }
+    private IDictionary<ProcessId, Session> ActiveSessions { get; set; }
 
     private Timer pollingTimer;
 
@@ -18,22 +18,22 @@ public class CorsacTimeTracker
         log = logAction;
         ActiveWindowService = activeWindowService;
         IdleTimeService = idleTimeService;
-        ActiveSessions = new Dictionary<ProcessId, ProcessSession>();
+        ActiveSessions = new Dictionary<ProcessId, Session>();
 
         var info = ActiveWindowService.GetActiveWindowInfo();
 
-        var currentSession = new ProcessSession(info.ProcessId, info.ProcessName, info.Title);
+        var currentSession = new Session(info.ProcessId, info.ProcessName, info.Title);
         Add(currentSession);
 
         pollingTimer = new Timer((state) =>
         {
             // log(ActiveSessions.ToReadable());
-            if (IdleTimeService.GetIdleTime() < 1000)
+            if (IdleTimeService.GetIdleTime() < Config.PollRateMiliseconds)
             {
                 Poll();
             }
             PurgeStaleSessions();
-        }, null, 0, 1000);
+        }, null, 0, Config.PollRateMiliseconds);
     }
 
     ~CorsacTimeTracker()
@@ -68,21 +68,22 @@ public class CorsacTimeTracker
         }
         else
         {
-            var currentSession = new ProcessSession(info.ProcessId, info.ProcessName, info.Title);
+            var currentSession = new Session(info.ProcessId, info.ProcessName, info.Title);
             Add(currentSession);
         }
     }
 
-    private void Add(ProcessSession session)
+    private void Add(Session session)
     {
         ActiveSessions.Add(session.ProcessId, session);
-        DBTransactions.AddSession(session);
+        var id = DBTransactions.AddSession(session);
+        session.Id = id;
     }
 
-    private void UpdateActivity(ProcessSession session, ActiveWindowInfo info)
+    private void UpdateActivity(Session session, ActiveWindowInfo info)
     {
-        TitleActivityUpdate titleSessionInfo = session.Activity(info.Title);
-        DBTransactions.UpdateSessionActivity(session, titleSessionInfo);
+        TitleActivityUpdate titleInfo = session.Activity(info.Title);
+        DBTransactions.UpdateSessionActivity(session, titleInfo);
     }
 
 }

@@ -2,59 +2,65 @@ using Microsoft.EntityFrameworkCore;
 
 public static class DBTransactions
 {
-    public static void AddSession(ProcessSession session)
+    public static int AddSession(Session session)
     {
         using (var db = new CorsacTimeTrackerContext())
         {
-
-            var processSession = db.Add(new ProcessSessionModel
+            var dbSession = new SessionModel
             {
                 Name = session.ProcessName,
                 PID = Convert.ToInt32(session.ProcessId),
                 Start = session.Start,
                 End = session.Start,
-                Subsessions = new List<TitleSessionModel>
+                Titles = new List<TitleModel>
             {
-                new TitleSessionModel
+                new TitleModel
                 {
-                    Title = session.Subsessions[0].Title,
-                    Start = session.Subsessions[0].Start,
-                    End = session.Subsessions[0].Start
+                    Title = session.Titles[0].WindowTitle,
+                    Start = session.Titles[0].Start,
+                    End = session.Titles[0].Start
                 }
             }
-            });
+            };
+            db.Add(dbSession);
             db.SaveChanges();
+            return dbSession.Id;
         }
     }
 
-    public static void UpdateSessionActivity(ProcessSession session, TitleActivityUpdate titleSessionInfo)
+    public static void UpdateSessionActivity(Session session, TitleActivityUpdate titleInfo)
     {
         using (var db = new CorsacTimeTrackerContext())
         {
-            var processSession = db.ProcessSessions.Include(ps => ps.Subsessions).First(ps => ps.PID == session.ProcessId);
-            processSession.End = session.LastActivity;
-            processSession.Subsessions.Last().End = titleSessionInfo.OldSession.LastActivity;
-            if (titleSessionInfo.NewSession != null)
+            var sessionModel = db.Sessions.Include(ps => ps.Titles).First(ps => ps.Id == session.Id);
+            sessionModel.End = session.LastActivity;
+            sessionModel.Titles.Last().End = titleInfo.OldActivity.LastActivity;
+            if (titleInfo.NewActivity != null)
             {
-                processSession.Subsessions.Add(new TitleSessionModel
+                sessionModel.Titles.Add(new TitleModel
                 {
-                    Title = titleSessionInfo.NewSession.Title,
-                    Start = titleSessionInfo.NewSession.Start,
-                    End = titleSessionInfo.NewSession.Start
-                });
+                    Title = titleInfo.NewActivity.WindowTitle,
+                    Start = titleInfo.NewActivity.Start,
+                    End = titleInfo.NewActivity.Start,
+                    Session = sessionModel
+            });
             }
 
             db.SaveChanges();
         }
     }
 
-    public static void EndSession(ProcessSession session)
+    public static void EndSession(Session session)
     {
         using (var db = new CorsacTimeTrackerContext())
         {
-            var processSession = db.ProcessSessions.First(ps => ps.PID == session.ProcessId);
-            processSession.End = (DateTime)session.End;
-            processSession.Subsessions.Last().End = (DateTime)session.Subsessions.Last().End;
+            var sessionModel = db.Sessions.Include(s => s.Titles).First(s => s.Id == session.Id);
+            sessionModel.End = (DateTime)session.End;
+            sessionModel.Titles.Last().End = (DateTime)session.Titles.Last().End;
+
+            if(((DateTime)session.End - sessionModel.Start).TotalSeconds < Config.MinimumSessionSeconds) {
+                db.Sessions.Remove(sessionModel);
+            }
             db.SaveChanges();
         }
     }

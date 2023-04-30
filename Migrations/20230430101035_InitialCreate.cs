@@ -12,7 +12,7 @@ namespace time_tracking.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "ProcessSessions",
+                name: "Sessions",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
@@ -24,11 +24,11 @@ namespace time_tracking.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ProcessSessions", x => x.Id);
+                    table.PrimaryKey("PK_Sessions", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "TitleSessions",
+                name: "Titles",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
@@ -36,32 +36,33 @@ namespace time_tracking.Migrations
                     Title = table.Column<string>(type: "TEXT", nullable: false),
                     Start = table.Column<DateTime>(type: "TEXT", nullable: false),
                     End = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    ProcessSessionModelId = table.Column<int>(type: "INTEGER", nullable: true)
+                    SessionId = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TitleSessions", x => x.Id);
+                    table.PrimaryKey("PK_Titles", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_TitleSessions_ProcessSessions_ProcessSessionModelId",
-                        column: x => x.ProcessSessionModelId,
-                        principalTable: "ProcessSessions",
-                        principalColumn: "Id");
+                        name: "FK_Titles_Sessions_SessionId",
+                        column: x => x.SessionId,
+                        principalTable: "Sessions",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_TitleSessions_ProcessSessionModelId",
-                table: "TitleSessions",
-                column: "ProcessSessionModelId");
+                name: "IX_Titles_SessionId",
+                table: "Titles",
+                column: "SessionId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "TitleSessions");
+                name: "Titles");
 
             migrationBuilder.DropTable(
-                name: "ProcessSessions");
+                name: "Sessions");
         }
     }
 }

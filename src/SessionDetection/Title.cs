@@ -1,10 +1,10 @@
-public class TitleSession : BaseSession
+public class Title : BaseSession
 {
-    public string Title { get; set; }
+    public string WindowTitle { get; set; }
 
-    public TitleSession(string title)
+    public Title(string title)
     {
-        Title = title;
+        WindowTitle = title;
         Start = DateTime.Now;
         LastActivity = Start;
     }
@@ -19,6 +19,6 @@ public class TitleSession : BaseSession
 
     public override string ToString()
     {
-        return $"[Title: {Title}; Length: {Length}]";
+        return $"[Title: {WindowTitle}; Length: {Length}]";
     }
 }
